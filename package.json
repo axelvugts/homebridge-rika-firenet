@@ -1,0 +1,20 @@
+{
+  "name": "homebridge-rika-firenet",
+  "version": "1.0.0",
+  "description": "Plug-in to control RIKA stoves via the FireNet cloud service.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "homebridge-plugin"
+  ],
+  "engines": {
+    "homebridge": ">=0.2.5"
+  },
+  "author": "Axel Vugts (github@axelv.net)",
+  "license": "GNU GPLv3",
+  "dependencies": {
+    "request": "github:request/request"
+  }
+}
