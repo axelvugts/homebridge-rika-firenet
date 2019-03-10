@@ -89,32 +89,10 @@ class RIKAFirenetAccessory {
   Active.ACTIVE = 1;*/
   setActiveCharacteristicHandler (value, callback) {
     this.Active = value;
-    this.log(`calling setActiveCharacteristicHandler`, value)
-    request.get({url:'https://www.rika-firenet.com/api/client/'+this.config.stoveID+'/status'}, (error, response, body) => {
-      if (response.statusCode == 200 && body.indexOf(this.config.stoveID) > -1) {// request successful
-        var json = JSON.parse(body);
-        json.controls.onOff = (value === 1); // 1 = true = active
-        request.post({url:'https://www.rika-firenet.com/api/client/'+this.config.stoveID+"/controls", form: json.controls}, (error, response, body) => {
-          if (response.statusCode == 200) {// Update successful
-            this.log("Active Characteristic set:", value)
-            callback(null)
-          } else {
-            this.log("Failed to update Active characteristic", response.statusCode);
-            console.log(body);
-          }
-        })
-      } else if (response.statusCode == 401) { // Logged out
-        this.log("Updating status failed: login required")
-        this.loginToFirenet(this.updateStatus.bind(this))
-      } else if (response.statusCode == 500) { // Stove not linked to account or general server error
-        this.log("Updating status failed: Firenet reported an Internal Server Error. Is the stove linked to this account?")
-      }
-    })
+    this.log(`calling setActiveCharacteristicHandler`, value);
+    this.updateCharacteristic("onOff", (value === 1), callback);
   }
 
-  /*TargetHeaterCoolerState.AUTO = 0;
-  TargetHeaterCoolerState.HEAT = 1;
-  TargetHeaterCoolerState.COOL = 2;*/
   setTargetHeaterCoolerStateCharacteristicHandler (value, callback) {
     // We'll keep this stub for now, even though it is useless
     this.TargetHeaterCoolerState = value
@@ -123,29 +101,9 @@ class RIKAFirenetAccessory {
   }
 
   setHeatingThresholdTemperatureCharacteristicHandler (value, callback) {
-    this.HeatingThresholdTemperature = value
-    this.log(`calling setHeatingThresholdTemperatureCharacteristicHandler`, value)
-
-    request.get({url:'https://www.rika-firenet.com/api/client/'+this.config.stoveID+'/status'}, (error, response, body) => {
-      if (response.statusCode == 200 && body.indexOf(this.config.stoveID) > -1) {// request successful
-        var json = JSON.parse(body);
-        json.controls.targetTemperature = value;
-        request.post({url:'https://www.rika-firenet.com/api/client/'+this.config.stoveID+"/controls", form: json.controls}, (error, response, body) => {
-          if (response.statusCode == 200) {// Update successful
-            this.log("Target temperature set", value)
-            callback(null)
-          } else {
-            this.log("Failed to update target temperature", response.statusCode);
-            console.log(body);
-          }
-        })
-      } else if (response.statusCode == 401) { // Logged out
-        this.log("Updating status failed: login required")
-        this.loginToFirenet(this.updateStatus.bind(this))
-      } else if (response.statusCode == 500) { // Stove not linked to account or general server error
-        this.log("Updating status failed: Firenet reported an Internal Server Error. Is the stove linked to this account?")
-      }
-    })
+    this.HeatingThresholdTemperature = value;
+    this.log(`calling setHeatingThresholdTemperatureCharacteristicHandler`, value);
+    this.updateCharacteristic("targetTemperature", value, callback);
   }
 
   // RIKA specific code
@@ -227,7 +185,30 @@ class RIKAFirenetAccessory {
     }
   }
 
-
+  /*
+   * Send a changed characteristic to Firenet
+   */
+  updateCharacteristic(controlItem, value, callback) {
+    request.get({url:'https://www.rika-firenet.com/api/client/'+this.config.stoveID+'/status'}, (error, response, body) => {
+      if (response.statusCode == 200 && body.indexOf(this.config.stoveID) > -1) {// request successful
+        var json = JSON.parse(body);
+        json.controls[controlItem] = value;
+        request.post({url:'https://www.rika-firenet.com/api/client/'+this.config.stoveID+"/controls", form: json.controls}, (error, response, body) => {
+          if (response.statusCode == 200) {// Update successful
+            this.log(controlItem + " set", value)
+            callback(null)
+          } else {
+            this.log("Failed to update " + controlItem, body);
+          }
+        })
+      } else if (response.statusCode == 401) { // Logged out
+        this.log("Updating status failed: login required")
+        this.loginToFirenet(this.updateStatus.bind(this))
+      } else if (response.statusCode == 500) { // Stove not linked to account or general server error
+        this.log("Updating status failed: Firenet reported an Internal Server Error. Is the stove linked to this account?")
+      }
+    })
+  }
 
 
 
